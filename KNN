@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easy KNN Classifier | AI Machine Learning</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: #38bdf8;
+      margin-bottom: 6px;
+    }
+
+    p.subtitle {
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    .main-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      max-width: 950px;
+      width: 100%;
+    }
+
+    /* Canvas styling */
+    .canvas-card {
+      background: #1e293b;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      text-align: center;
+    }
+
+    canvas {
+      background: #0b1329;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      cursor: crosshair;
+      display: block;
+    }
+
+    .canvas-instruction {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+
+    /* Controls Panel */
+    .controls-card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .btn-red { background: #ef4444; color: white; flex: 1; }
+    .btn-blue { background: #3b82f6; color: white; flex: 1; }
+    .btn-yellow { background: #facc15; color: black; flex: 1; }
+    
+    .btn-red.active { outline: 3px solid white; }
+    .btn-blue.active { outline: 3px solid white; }
+    .btn-yellow.active { outline: 3px solid white; }
+
+    .btn-action {
+      background: #334155;
+      color: white;
+      width: 100%;
+    }
+    .btn-action:hover {
+      background: #475569;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    /* Result Box */
+    .result-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .result-text {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+
+    .notes {
+      max-width: 950px;
+      width: 100%;
+      margin-top: 20px;
+      background: #1e293b;
+      padding: 16px 20px;
+      border-radius: 10px;
+      border-left: 4px solid #38bdf8;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>K-Nearest Neighbors (KNN) Visualizer</h1>
+    <p class="subtitle">Easiest Machine Learning Algorithm: Distance-based Classification</p>
+  </header>
+
+  <div class="main-box">
+    <!-- Canvas Area -->
+    <div class="canvas-card">
+      <canvas id="myCanvas" width="500" height="420"></canvas>
+      <div class="canvas-instruction">Click inside the canvas to place points!</div>
+    </div>
+
+    <!-- Controls Area -->
+    <div class="controls-card">
+      <div class="control-item">
+        <label>1. Select Mode to Click</label>
+        <div class="btn-row">
+          <button id="modeRed" class="btn-red active" onclick="setMode('Red')">Red</button>
+          <button id="modeBlue" class="btn-blue" onclick="setMode('Blue')">Blue</button>
+          <button id="modeTest" class="btn-yellow" onclick="setMode('Test')">? (Test)</button>
+        </div>
+      </div>
+
+      <div class="control-item">
+        <label>2. Choose K (Neighbors): <span id="kVal">3</span></label>
+        <input type="range" id="kSlider" min="1" max="9" step="2" value="3" oninput="updateK(this.value)">
+      </div>
+
+      <div class="result-box">
+        <label>Prediction Result</label>
+        <div id="resultText" class="result-text" style="color: #94a3b8;">Place a yellow point</div>
+        <div id="voteText" style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Votes: Red=0, Blue=0</div>
+      </div>
+
+      <button class="btn-action" onclick="loadSampleData()">Load Sample Points</button>
+      <button class="btn-action" onclick="clearAll()">Clear Screen</button>
+    </div>
+  </div>
+
+  <div class="notes">
+    <strong style="color: #38bdf8;">Interview Explanation (Simple):</strong><br>
+    "This project visually implements <strong>K-Nearest Neighbors (KNN)</strong> in pure JavaScript. 
+    When we place a query point (yellow), it calculates the <strong>Euclidean distance</strong>: <code>&radic;((x₂-x₁)&sup2; + (y₂-y₁)&sup2;)</code> 
+    to all training points, sorts them, and assigns the class with the <strong>majority vote</strong> among the <em>K</em> closest neighbors."
+  </div>
+
+  <script>
+    // 1. DATA STORAGE
+    // Training points: array of { x, y, color }
+    let trainingPoints = [];
+    
+    // Query point: { x, y } (The point to be classified)
+    let testPoint = null;
+
+    // Current placing mode: 'Red', 'Blue', or 'Test'
+    let currentMode = 'Red';
+    let K = 3;
+
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // 2. HELPER FUNCTIONS
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById("modeRed").classList.toggle("active", mode === 'Red');
+      document.getElementById("modeBlue").classList.toggle("active", mode === 'Blue');
+      document.getElementById("modeTest").classList.toggle("active", mode === 'Test');
+    }
+
+    function updateK(val) {
+      K = parseInt(val);
+      document.getElementById("kVal").innerText = K;
+      classify();
+      draw();
+    }
+
+    // Euclidean Distance formula: sqrt((x2-x1)^2 + (y2-y1)^2)
+    function getDistance(p1, p2) {
+      const dx = p1.x - p2.x;
+      const dy = p1.y - p2.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // 3. CORE KNN ALGORITHM (VERY EASY!)
+    function classify() {
+      if (!testPoint || trainingPoints.length === 0) return;
+
+      // Step A: Calculate distance from test point to every training point
+      let distances = trainingPoints.map(p => {
+        return {
+          point: p,
+          dist: getDistance(testPoint, p)
+        };
+      });
+
+      // Step B: Sort distances from smallest to largest
+      distances.sort((a, b) => a.dist - b.dist);
+
+      // Step C: Pick the top K nearest neighbors
+      const neighbors = distances.slice(0, Math.min(K, distances.length));
+
+      // Step D: Count votes (Red vs Blue)
+      let redVotes = 0;
+      let blueVotes = 0;
+      for (let n of neighbors) {
+        if (n.point.color === 'Red') redVotes++;
+        else if (n.point.color === 'Blue') blueVotes++;
+      }
+
+      // Step E: Determine Winner (Majority vote)
+      const resEl = document.getElementById("resultText");
+      const voteEl = document.getElementById("voteText");
+
+      voteEl.innerText = `Votes in top ${neighbors.length}: Red=${redVotes}, Blue=${blueVotes}`;
+
+      if (redVotes > blueVotes) {
+        resEl.innerText = "PREDICTION: RED";
+        resEl.style.color = "#ef4444";
+      } else if (blueVotes > redVotes) {
+        resEl.innerText = "PREDICTION: BLUE";
+        resEl.style.color = "#3b82f6";
+      } else {
+        resEl.innerText = "PREDICTION: TIE";
+        resEl.style.color = "#facc15";
+      }
+
+      return neighbors;
+    }
+
+    // 4. DRAWING ON CANVAS
+    function draw() {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw lines to K nearest neighbors if testPoint exists
+      if (testPoint && trainingPoints.length > 0) {
+        let distances = trainingPoints.map(p => ({ point: p, dist: getDistance(testPoint, p) }));
+        distances.sort((a, b) => a.dist - b.dist);
+        const topK = distances.slice(0, Math.min(K, distances.length));
+
+        ctx.strokeStyle = "rgba(250, 204, 21, 0.45)"; // yellow lines
+        ctx.lineWidth = 2;
+        for (let n of topK) {
+          ctx.beginPath();
+          ctx.moveTo(testPoint.x, testPoint.y);
+          ctx.lineTo(n.point.x, n.point.y);
+          ctx.stroke();
+        }
+      }
+
+      // Draw all training points
+      for (let p of trainingPoints) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = p.color === 'Red' ? '#ef4444' : '#3b82f6';
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Draw test point (Yellow)
+      if (testPoint) {
+        ctx.beginPath();
+        ctx.arc(testPoint.x, testPoint.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#facc15';
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    // 5. MOUSE CLICK HANDLER
+    canvas.addEventListener("click", function(event) {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      if (currentMode === 'Test') {
+        testPoint = { x, y };
+      } else {
+        trainingPoints.push({ x, y, color: currentMode });
+      }
+
+      classify();
+      draw();
+    });
+
+    // 6. SAMPLE DATA FOR INSTANT DEMO
+    function loadSampleData() {
+      trainingPoints = [
+        // Red cluster (top-left)
+        { x: 100, y: 110, color: 'Red' },
+        { x: 130, y: 90, color: 'Red' },
+        { x: 140, y: 150, color: 'Red' },
+        { x: 90, y: 170, color: 'Red' },
+        // Blue cluster (bottom-right)
+        { x: 380, y: 310, color: 'Blue' },
+        { x: 410, y: 280, color: 'Blue' },
+        { x: 360, y: 350, color: 'Blue' },
+        { x: 430, y: 340, color: 'Blue' }
+      ];
+      testPoint = { x: 160, y: 160 }; // Near Red
+      classify();
+      draw();
+    }
+
+    function clearAll() {
+      trainingPoints = [];
+      testPoint = null;
+      document.getElementById("resultText").innerText = "Place a yellow point";
+      document.getElementById("resultText").style.color = "#94a3b8";
+      document.getElementById("voteText").innerText = "Votes: Red=0, Blue=0";
+      draw();
+    }
+
+    // Start with preloaded points
+    loadSampleData();
+  </script>
+</body>
+</html>
